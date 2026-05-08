@@ -2,27 +2,481 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>page test</title>
-
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Page test">
-    <meta name="author" content="Nyl">
-
+    <title>Calendrier des anniversaires</title>
     <link rel="icon" href="resources/pdp_manou_2025.ico">
 
-    <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Raleway:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
-
     <style>
+        :root {
+            --color-1: #B2AE77;
+            --color-2: #FFF;
+            --color-3: #5D7710;
+            --color-4: #320E07;
+            --color-5: #F3B52E;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: "Raleway", sans-serif;
+            min-height: 100vh;
+            font-family: Arial, sans-serif;
+            background:
+                radial-gradient(circle at top, rgba(243,181,46,0.15), transparent 40%),
+                linear-gradient(135deg, var(--color-4), #1a0502);
+            color: var(--color-2);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 40px;
+        }
+
+        .calendar-container {
+            width: 100%;
+            max-width: 1400px;
+        }
+
+        .title {
+            text-align: center;
+            font-size: 3rem;
+            margin-bottom: 40px;
+            color: var(--color-5);
+            text-shadow: 0 0 20px rgba(243,181,46,0.3);
+        }
+
+        .months-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .month-card {
+            background: rgba(255,255,255,0.08);
+            border: 2px solid rgba(255,255,255,0.08);
+            border-radius: 20px;
+            padding: 20px;
+            cursor: pointer;
+            transition: 0.25s;
+            backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .month-card::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            opacity: 0.15;
+            background: linear-gradient(135deg, var(--month-color), transparent);
+        }
+
+        .month-card:hover {
+            transform: translateY(-5px) scale(1.02);
+            border-color: var(--month-color);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+        }
+
+        .month-title {
+            font-size: 1.6rem;
+            margin-bottom: 15px;
+            color: var(--month-color);
+            position: relative;
+            z-index: 1;
+        }
+
+        .birthday-preview {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .preview-person {
+            background: rgba(255,255,255,0.07);
+            padding: 10px;
+            border-radius: 10px;
+            font-size: 0.95rem;
+        }
+
+        .preview-empty {
+            opacity: 0.6;
+            font-style: italic;
+        }
+
+        .modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            z-index: 1000;
+            backdrop-filter: blur(8px);
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            width: min(1000px, 100%);
+            max-height: 90vh;
+            overflow-y: auto;
+            background: #1d0b07;
+            border: 2px solid var(--color-5);
+            border-radius: 25px;
+            padding: 30px;
+            position: relative;
+            box-shadow: 0 0 50px rgba(0,0,0,0.5);
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            background: transparent;
+            border: none;
+            color: var(--color-2);
+            font-size: 2rem;
+            cursor: pointer;
+        }
+
+        .modal-title {
+            font-size: 2.5rem;
+            color: var(--color-5);
+            margin-bottom: 25px;
+        }
+
+        .days-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+
+        .day-card {
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 18px;
+            padding: 18px;
+        }
+
+        .day-number {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: var(--color-1);
+            margin-bottom: 12px;
+        }
+
+        .person-card {
+            background: rgba(0,0,0,0.25);
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 12px;
+        }
+
+        .person-name {
+            font-size: 1rem;
+            font-weight: bold;
+            color: var(--color-5);
+        }
+
+        .person-pseudo {
+            opacity: 0.8;
+            margin-top: 4px;
+            font-size: 0.9rem;
+        }
+
+        .person-age {
+            margin-top: 6px;
+            color: var(--color-1);
+        }
+
+        .comment-label {
+            display: block;
+            margin-top: 10px;
+            margin-bottom: 5px;
+            font-size: 0.85rem;
+            opacity: 0.8;
+        }
+
+        .comment-input {
+            width: 100%;
+            min-height: 70px;
+            resize: vertical;
+            border: none;
+            outline: none;
+            border-radius: 10px;
+            padding: 10px;
+            background: rgba(255,255,255,0.08);
+            color: white;
+            font-family: inherit;
+        }
+
+        .empty-day {
+            opacity: 0.5;
+            font-style: italic;
+        }
+
+        @media (max-width: 700px) {
+            .title {
+                font-size: 2rem;
+            }
+
+            .modal-content {
+                padding: 20px;
+            }
+
+            .modal-title {
+                font-size: 2rem;
+            }
         }
     </style>
 </head>
-
 <body>
 
+    <div class="calendar-container">
+        <h1 class="title">Calendrier des anniversaires</h1>
+
+        <div class="months-grid" id="monthsGrid"></div>
+    </div>
+
+    <div class="modal" id="monthModal">
+        <div class="modal-content">
+            <button class="close-btn" id="closeModal">×</button>
+
+            <h2 class="modal-title" id="modalTitle"></h2>
+
+            <div class="days-grid" id="daysGrid"></div>
+        </div>
+    </div>
+
+    <script>
+        const months = [
+            "Janvier",
+            "Février",
+            "Mars",
+            "Avril",
+            "Mai",
+            "Juin",
+            "Juillet",
+            "Août",
+            "Septembre",
+            "Octobre",
+            "Novembre",
+            "Décembre"
+        ];
+
+        const monthColors = [
+            "#B2AE77",
+            "#F3B52E",
+            "#7d9932",
+            "#d7bc75",
+            "#c98c2c",
+            "#8ba94d",
+            "#b5a36a",
+            "#f3b52e",
+            "#7f8f47",
+            "#caa45c",
+            "#9cb35b",
+            "#ffd36d"
+        ];
+
+        const monthsGrid = document.getElementById("monthsGrid");
+        const modal = document.getElementById("monthModal");
+        const modalTitle = document.getElementById("modalTitle");
+        const daysGrid = document.getElementById("daysGrid");
+
+        let birthdays = [];
+
+        fetch("birthdays.json")
+            .then(response => response.json())
+            .then(data => {
+                birthdays = data;
+                generateMonthCards();
+            })
+            .catch(error => {
+                console.error("Erreur lors du chargement du JSON :", error);
+            });
+
+        function getMonthFromBirthday(birthday) {
+            const parts = birthday.split("-");
+
+            if (parts.length === 2) {
+                return parseInt(parts[0]);
+            }
+
+            return parseInt(parts[1]);
+        }
+
+        function getDayFromBirthday(birthday) {
+            const parts = birthday.split("-");
+
+            if (parts.length === 2) {
+                return parseInt(parts[1]);
+            }
+
+            return parseInt(parts[2]);
+        }
+
+        function generateMonthCards() {
+            months.forEach((monthName, index) => {
+                const monthNumber = index + 1;
+
+                const people = birthdays.filter(person =>
+                    getMonthFromBirthday(person.birthday) === monthNumber
+                );
+
+                const card = document.createElement("div");
+                card.className = "month-card";
+                card.style.setProperty("--month-color", monthColors[index]);
+
+                const previews = people.length
+                    ? people.slice(0, 4).map(person => `
+                        <div class="preview-person">
+                            <strong>${person.name}</strong><br>
+                            ${person.pseudo}
+                        </div>
+                    `).join("")
+                    : `<div class="preview-empty">Aucun anniversaire</div>`;
+
+                card.innerHTML = `
+                    <h2 class="month-title">${monthName}</h2>
+                    <div class="birthday-preview">
+                        ${previews}
+                    </div>
+                `;
+
+                card.addEventListener("click", () => openMonth(monthNumber));
+
+                monthsGrid.appendChild(card);
+            });
+        }
+
+        function openMonth(monthNumber) {
+            const monthName = months[monthNumber - 1];
+
+            modalTitle.textContent = monthName;
+            daysGrid.innerHTML = "";
+
+            const people = birthdays.filter(person =>
+                getMonthFromBirthday(person.birthday) === monthNumber
+            );
+
+            const groupedByDay = {};
+
+            people.forEach(person => {
+                const day = getDayFromBirthday(person.birthday);
+
+                if (!groupedByDay[day]) {
+                    groupedByDay[day] = [];
+                }
+
+                groupedByDay[day].push(person);
+            });
+
+            for (let day = 1; day <= 31; day++) {
+                const dayCard = document.createElement("div");
+                dayCard.className = "day-card";
+
+                const peopleOfDay = groupedByDay[day] || [];
+
+                let content = `
+                    <div class="day-number">${day}</div>
+                `;
+
+                if (peopleOfDay.length === 0) {
+                    content += `<div class="empty-day">Aucun anniversaire</div>`;
+                } else {
+                    peopleOfDay.forEach(person => {
+                        const commentKey = `${person.pseudo}_${day}_${monthNumber}`;
+                        const savedComment = localStorage.getItem(commentKey) || "";
+
+                        content += `
+                            <div class="person-card">
+                                <div class="person-name">${person.name}</div>
+                                <div class="person-pseudo">${person.pseudo}</div>
+
+                                ${person.age !== null
+                                    ? `<div class="person-age">${person.age} ans</div>`
+                                    : `<div class="person-age">Âge inconnu</div>`
+                                }
+
+                                <label class="comment-label">Commentaire :</label>
+                                <textarea
+                                    class="comment-input"
+                                    data-key="${commentKey}"
+                                >${savedComment}</textarea>
+                            </div>
+                        `;
+                    });
+                }
+
+                dayCard.innerHTML = content;
+                daysGrid.appendChild(dayCard);
+            }
+
+            modal.classList.add("active");
+
+            setTimeout(() => {
+                document.querySelectorAll(".comment-input").forEach(input => {
+                    input.addEventListener("input", () => {
+                        localStorage.setItem(input.dataset.key, input.value);
+                    });
+                });
+            }, 0);
+        }
+
+        document.getElementById("closeModal").addEventListener("click", () => {
+            modal.classList.remove("active");
+        });
+
+        modal.addEventListener("click", event => {
+            if (event.target === modal) {
+                modal.classList.remove("active");
+            }
+        });
+    </script>
 </body>
 </html>
+```
+
+# Structure des fichiers
+
+```txt
+/projet
+│
+├── index.html
+└── birthdays.json
+```
+
+# Exemple de birthdays.json
+
+```json
+[
+  {
+    "name": "ferarepa",
+    "pseudo": "@ferarepa",
+    "birthday": "05-05",
+    "age": null
+  },
+  {
+    "name": "La Sandale",
+    "pseudo": "@.stendhall",
+    "birthday": "2006-05-07",
+    "age": 19
+  }
+]
+```
+
+# Important
+
+Le fichier ne fonctionnera pas correctement si tu ouvres directement le HTML avec un double clic à cause du `fetch()` du JSON.
+
+Il faut lancer un petit serveur local.
+
+Exemple avec VSCode + Live Server.
