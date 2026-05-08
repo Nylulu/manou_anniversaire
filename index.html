@@ -184,20 +184,6 @@
             font-size: 0.85rem;
         }
 
-        .birthday-age {
-            font-size: 0.85rem;
-            margin-top: 4px;
-        }
-
-        .comment-box {
-            width: 100%;
-            min-height: 60px;
-            margin-top: 6px;
-            border: none;
-            border-radius: 8px;
-            padding: 8px;
-            resize: vertical;
-        }
 
         @media (max-width: 1100px) {
             .calendar-grid {
@@ -402,27 +388,22 @@
                     content += `<div class="empty-day">Aucun anniversaire</div>`;
                 } else {
                     peopleOfDay.forEach(person => {
-                        const commentKey = `${person.pseudo}_${day}_${monthNumber}`;
-                        const savedComment = localStorage.getItem(commentKey) || "";
 
-                        content += `
-                            <div class="birthday-card">
-                                <div class="birthday-name">${person.name}</div>
-                                <div class="birthday-pseudo">${person.pseudo}</div>
+                        let customComment = "";
 
-                                ${person.age !== null
-                                    ? `<div class="birthday-age">${person.age} ans</div>`
-                                    : `<div class="birthday-age">Âge inconnu</div>`
-                                }
+                        // commentaires en dur
+                        if (person.pseudo === "@truc") {
+                            customComment = "Très gentil";
+                        }
 
-                                <label class="comment-label">Commentaire :</label>
-                                <textarea
-                                    class="comment-box"
-                                    data-key="${commentKey}"
-                                >${savedComment}</textarea>
-                            </div>
-                        `;
-                    });
+                        if (person.pseudo === "@machin") {
+                            customComment = "Aime les pâtes";
+                        }
+
+    // couleur spéciale pour le 21 octobre
+    const isSpecialDay =
+        monthNumber === 10 &&
+        day === 21;
                 }
 
                 dayCard.innerHTML = content;
@@ -431,13 +412,6 @@
 
             modal.classList.add("active");
 
-            setTimeout(() => {
-                document.querySelectorAll(".comment-box").forEach(input => {
-                    input.addEventListener("input", () => {
-                        localStorage.setItem(input.dataset.key, input.value);
-                    });
-                });
-            }, 0);
         }
 
         document.getElementById("closeModal").addEventListener("click", () => {
