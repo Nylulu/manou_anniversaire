@@ -389,21 +389,45 @@
                 } else {
                     peopleOfDay.forEach(person => {
 
-                        let customComment = "";
+    let customComment = "";
 
-                        // commentaires en dur
-                        if (person.pseudo === "@truc") {
-                            customComment = "Très gentil";
-                        }
+    // commentaires en dur
+    if (person.pseudo === "@truc") {
+        customComment = "Très gentil";
+    }
 
-                        if (person.pseudo === "@machin") {
-                            customComment = "Aime les pâtes";
-                        }
+    if (person.pseudo === "@machin") {
+        customComment = "Aime les pâtes";
+    }
 
     // couleur spéciale pour le 21 octobre
     const isSpecialDay =
         monthNumber === 10 &&
         day === 21;
+
+    content += `
+        <div class="birthday-card"
+             style="${isSpecialDay ? 'background:#F3B52E;' : ''}">
+             
+            <div class="birthday-name">
+                ${person.name}
+            </div>
+
+            <div class="birthday-pseudo">
+                ${person.pseudo}
+            </div>
+
+            ${
+                customComment
+                    ? `<div class="birthday-comment">${customComment}</div>`
+                    : ""
+            }
+
+        </div>
+    `;
+});
+
+
                 }
 
                 dayCard.innerHTML = content;
