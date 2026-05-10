@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Calendrier des anniversaires</title>
+
     <link rel="icon" href="resources/pdp_manou_2025.ico">
 
     <style>
@@ -95,6 +96,9 @@
             font-size: 0.7rem;
             font-weight: bold;
             color: var(--color-4);
+            display: flex;
+            align-items: center;
+            gap: 4px;
         }
 
         .mini-name {
@@ -184,6 +188,17 @@
             font-size: 0.85rem;
         }
 
+        .birthday-comment {
+            margin-top: 6px;
+            font-size: 0.8rem;
+            opacity: 0.8;
+        }
+
+        .birthday-icon {
+            width: 16px;
+            height: 16px;
+            vertical-align: middle;
+        }
 
         @media (max-width: 1100px) {
             .calendar-grid {
@@ -212,6 +227,7 @@
         }
     </style>
 </head>
+
 <body>
 
     <div class="calendar-wrapper">
@@ -222,15 +238,18 @@
 
     <div class="modal" id="monthModal">
         <div class="modal-content">
+
             <button class="close-btn" id="closeModal">×</button>
 
             <h2 class="modal-title" id="modalTitle"></h2>
 
             <div class="month-detail-grid" id="daysGrid"></div>
+
         </div>
     </div>
 
     <script>
+
         const months = [
             "Janvier",
             "Février",
@@ -246,19 +265,10 @@
             "Décembre"
         ];
 
-        const monthColors = [
-            "#B2AE77",
-            "#F3B52E",
-            "#7d9932",
-            "#d7bc75",
-            "#c98c2c",
-            "#8ba94d",
-            "#b5a36a",
-            "#f3b52e",
-            "#7f8f47",
-            "#caa45c",
-            "#9cb35b",
-            "#ffd36d"
+        const daysInMonth = [
+            31, 28, 31, 30,
+            31, 30, 31, 31,
+            30, 31, 30, 31
         ];
 
         const monthsGrid = document.getElementById("monthsGrid");
@@ -299,9 +309,15 @@
         }
 
         function generateMonthCards() {
+
             const weekdays = ["L", "M", "M", "J", "V", "S", "D"];
 
+            const today = new Date();
+            const todayDay = today.getDate();
+            const todayMonth = today.getMonth() + 1;
+
             months.forEach((monthName, index) => {
+
                 const monthNumber = index + 1;
 
                 const people = birthdays.filter(person =>
@@ -311,12 +327,20 @@
                 const grouped = {};
 
                 people.forEach(person => {
+
                     const day = getDayFromBirthday(person.birthday);
 
-                    if (!grouped[day]) grouped[day] = [];
+                    if (!grouped[day]) {
+                        grouped[day] = [];
+                    }
 
                     grouped[day].push(person);
                 });
+
+                const hasBirthdayToday = people.some(person =>
+                    getDayFromBirthday(person.birthday) === todayDay &&
+                    monthNumber === todayMonth
+                );
 
                 const month = document.createElement("div");
                 month.className = "month";
@@ -325,37 +349,73 @@
                     <div class="weekday">${day}</div>
                 `).join("");
 
-                for (let day = 1; day <= 31; day++) {
+                for (let day = 1; day <= daysInMonth[index]; day++) {
+
                     const birthdaysOfDay = grouped[day] || [];
+
+                    const isToday =
+                        day === todayDay &&
+                        monthNumber === todayMonth;
 
                     daysHTML += `
                         <div class="day-preview">
-                            <div class="day-number-preview">${day}</div>
+
+                            <div class="day-number-preview">
+
+                                ${day}
+
+                                ${
+                                    isToday && birthdaysOfDay.length > 0
+                                        ? `<img src="resources/miel_anniv.png" class="birthday-icon">`
+                                        : ""
+                                }
+
+                            </div>
 
                             ${birthdaysOfDay.slice(0, 2).map(person => `
-                                <div class="mini-name">${person.name}</div>
+                                <div class="mini-name">
+                                    ${person.name}
+                                </div>
                             `).join("")}
+
                         </div>
                     `;
                 }
 
                 month.innerHTML = `
-                    <div class="month-header">${monthName}</div>
+                    <div class="month-header">
+
+                        ${monthName}
+
+                        ${
+                            hasBirthdayToday
+                                ? `<img src="resources/miel_anniv.png" class="birthday-icon">`
+                                : ""
+                        }
+
+                    </div>
+
                     <div class="month-days">
                         ${daysHTML}
                     </div>
                 `;
 
-                month.addEventListener("click", () => openMonth(monthNumber));
+                month.addEventListener("click", () => {
+                    openMonth(monthNumber);
+                });
 
                 monthsGrid.appendChild(month);
             });
         }
 
         function openMonth(monthNumber) {
+
             const monthName = months[monthNumber - 1];
 
-            modalTitle.textContent = monthName;
+            modalTitle.innerHTML = `
+                ${monthName}
+            `;
+
             daysGrid.innerHTML = "";
 
             const people = birthdays.filter(person =>
@@ -365,6 +425,7 @@
             const groupedByDay = {};
 
             people.forEach(person => {
+
                 const day = getDayFromBirthday(person.birthday);
 
                 if (!groupedByDay[day]) {
@@ -374,68 +435,101 @@
                 groupedByDay[day].push(person);
             });
 
-            for (let day = 1; day <= 31; day++) {
+            const today = new Date();
+            const todayDay = today.getDate();
+            const todayMonth = today.getMonth() + 1;
+
+            for (let day = 1; day <= daysInMonth[monthNumber - 1]; day++) {
+
                 const dayCard = document.createElement("div");
                 dayCard.className = "day-detail";
 
                 const peopleOfDay = groupedByDay[day] || [];
 
                 let content = `
-                    <div class="detail-day-number">${day}</div>
+                    <div class="detail-day-number">
+
+                        ${day}
+
+                        ${
+                            day === todayDay &&
+                            monthNumber === todayMonth &&
+                            peopleOfDay.length > 0
+                                ? `<img src="resources/miel_anniv.png" class="birthday-icon">`
+                                : ""
+                        }
+
+                    </div>
                 `;
 
                 if (peopleOfDay.length === 0) {
-                    content += `<div class="empty-day">Aucun anniversaire</div>`;
+
+                    content += `
+                        <div class="empty-day">
+                            Aucun anniversaire
+                        </div>
+                    `;
+
                 } else {
+
                     peopleOfDay.forEach(person => {
 
-    let customComment = "";
+                        let customComment = "";
 
-    // commentaires en dur
-    if (person.pseudo === "@truc") {
-        customComment = "Très gentil";
-    }
+                        if (person.pseudo === "@truc") {
+                            customComment = "Très gentil";
+                        }
 
-    if (person.pseudo === "@machin") {
-        customComment = "Aime les pâtes";
-    }
+                        if (person.pseudo === "@machin") {
+                            customComment = "Aime les pâtes";
+                        }
 
-    // couleur spéciale pour le 21 octobre
-    const isSpecialDay =
-        monthNumber === 10 &&
-        day === 21;
+                        const isSpecialDay =
+                            monthNumber === 10 &&
+                            day === 21;
 
-    content += `
-        <div class="birthday-card"
-             style="${isSpecialDay ? 'background:#F3B52E;' : ''}">
-             
-            <div class="birthday-name">
-                ${person.name}
-            </div>
+                        content += `
+                            <div class="birthday-card"
+                                 style="${isSpecialDay ? 'background:#F3B52E;' : ''}">
 
-            <div class="birthday-pseudo">
-                ${person.pseudo}
-            </div>
+                                <div class="birthday-name">
+                                    ${person.name}
+                                </div>
 
-            ${
-                customComment
-                    ? `<div class="birthday-comment">${customComment}</div>`
-                    : ""
-            }
+                                <div class="birthday-pseudo">
 
-        </div>
-    `;
-});
+                                    ${person.pseudo}
 
+                                    ${
+                                        day === todayDay &&
+                                        monthNumber === todayMonth
+                                            ? `<img src="resources/miel_anniv.png" class="birthday-icon">`
+                                            : ""
+                                    }
 
+                                </div>
+
+                                ${
+                                    customComment
+                                        ? `
+                                            <div class="birthday-comment">
+                                                ${customComment}
+                                            </div>
+                                        `
+                                        : ""
+                                }
+
+                            </div>
+                        `;
+                    });
                 }
 
                 dayCard.innerHTML = content;
+
                 daysGrid.appendChild(dayCard);
             }
 
             modal.classList.add("active");
-
         }
 
         document.getElementById("closeModal").addEventListener("click", () => {
@@ -443,10 +537,14 @@
         });
 
         modal.addEventListener("click", event => {
+
             if (event.target === modal) {
                 modal.classList.remove("active");
             }
+
         });
+
     </script>
+
 </body>
 </html>
